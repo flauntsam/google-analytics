@@ -22,16 +22,14 @@ class Flow(client.OAuth2WebServerFlow):
         return Credentials.find(complete=True, **credentials.__dict__)
 
 # a simplified version of `oauth2client.tools.run_flow`
-def authorize(client_id, client_secret, port=5000):
+def authorize(client_id, client_secret):
     flow = Flow(client_id, client_secret,
-        redirect_uri='http://localhost:{port}/'.format(port=port))
+        redirect_uri='urn:ietf:wg:oauth:2.0:oob')
 
     authorize_url = flow.step1_get_authorize_url()
-    webbrowser.open(authorize_url, new=1, autoraise=True)
-    qs = utils.single_serve(
-        message='Authentication flow completed. You may close the browser tab.',
-        port=port)
-    return flow.step2_exchange(qs['code'])
+    print ('Go to the following link in your browser: ' + authorize_url)
+    code = input('Enter verification code: ').strip()
+    return flow.step2_exchange(code)
 
 @normalize
 def revoke(credentials):
