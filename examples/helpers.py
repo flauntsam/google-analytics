@@ -12,12 +12,9 @@ def get_months(start_date,end_date ):
   end_dt = datetime.strptime(end_date, '%Y-%m-%d')
   return rrule(MONTHLY, dtstart=strt_dt, until=end_dt).count()
 
-
-
 def print_profiles(accounts):
 
   out = []
-  out_l = []
 
   for a in accounts: 
     out.append({"accounts":a.name, "webproperties":""})
