@@ -10,6 +10,7 @@ the basic `googleanalytics.oauth.authenticate`, it also tries
 to get existing credentials from the keyring, from environment
 variables, it prompts for information when required and so on.
 """
+import re
 
 from . import keyring
 from . import oauth
