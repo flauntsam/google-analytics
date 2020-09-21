@@ -15,7 +15,11 @@ from . import keyring
 from . import oauth
 from .oauth import Flow, Credentials
 
-def navigate(accounts, account=None, webproperty=None, profile=None, default_profile=True):
+def navigate(accounts, account=None, webproperty=None, profile=None, ga_url=None, default_profile=True):
+     
+    if ga_url:
+        return get_profile_from_url(accounts, ga_url)
+        
     if webproperty and not account:
         raise KeyError("Cannot navigate to a webproperty or profile without knowing the account.")
     if profile and not (webproperty and account):
@@ -34,6 +38,42 @@ def navigate(accounts, account=None, webproperty=None, profile=None, default_pro
     else:
         return accounts
 
+    
+
+def get_profile_from_url(accounts, ga_url):
+        
+  if isinstance(ga_url, str) and "https://analytics.google.com/" in ga_url:
+    
+    psearch = re.search('^https:\/\/analytics\.google\.com\/analytics\/web\/.*\/a(?P<a>[0-9]+)w(?P<w>[0-9]+)p(?P<p>[0-9]+).*$', str(ga_url), re.IGNORECASE)
+
+    if len(psearch.groups()) == 3:
+      return get_profile(accounts, psearch['a'], psearch['w'], psearch['p'])
+
+    else:
+      error = 'The URL was not correct.  it should include a portion matching `/a23337837w45733833p149423361/`'
+
+  else:
+    error = 'The url provided should start with `https://analytics.google.com\/`'
+
+  raise KeyError(error)
+
+    
+
+def get_profile(accounts, account, webproperty, profile):
+
+  try:
+    
+    account = accounts[account]
+    webproperty = [w for w in account.webproperties if w.raw['internalWebPropertyId'] == webproperty][0]
+    profile = webproperty.profiles[profile]
+
+    return profile
+
+  except Exception as e:
+    print('Unknown Exception:', str(e))
+    return None    
+
+
 def find(**kwargs):
     return oauth.Credentials.find(**kwargs)
 
@@ -45,8 +85,8 @@ def authenticate(
         client_email=None, private_key=None,
         access_token=None, refresh_token=None,
         account=None, webproperty=None, profile=None,
-        identity=None, prefix=None, suffix=None,
-        interactive=False, save=False):
+        ga_url=None, identity=None, prefix=None,
+        suffix=None, interactive=False, save=False):
     """
     The `authenticate` function will authenticate the user with the Google Analytics API,
     using a variety of strategies: keyword arguments provided to this function, credentials
@@ -93,8 +133,10 @@ def authenticate(
             raise KeyError("Cannot authenticate: enable interactive authorization, pass a token or use a service account.")
     
     accounts = oauth.authenticate(credentials)
-    scope = navigate(accounts, account=account, webproperty=webproperty, profile=profile)
+    scope = navigate(accounts, account=account, webproperty=webproperty, profile=profile, ga_url=ga_url)
     return scope
+
+
 
 def authorize(client_id=None, client_secret=None, client_email=None, private_key=None, save=False, identity=None, prefix=None, suffix=None):
     base_credentials = oauth.Credentials.find(
