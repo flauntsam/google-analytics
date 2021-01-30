@@ -6,13 +6,10 @@ and asking for authorization with Google, with
 `authenticate` at its core.
 
 `authenticate` will do what it says on the tin, but unlike
-the basic `googleanalytics.oauth.authenticate`, it also tries
-to get existing credentials from the keyring, from environment
-variables, it prompts for information when required and so on.
+the basic `googleanalytics.oauth.authenticate`, it prompts for information when required and so on.
 """
 import re
 
-from . import keyring
 from . import oauth
 from .oauth import Flow, Credentials
 
@@ -87,7 +84,7 @@ def authenticate(
         access_token=None, refresh_token=None,
         account=None, webproperty=None, profile=None,
         ga_url=None, identity=None, prefix=None,
-        suffix=None, interactive=False, save=False):
+        suffix=None, interactive=False):
     """
     The `authenticate` function will authenticate the user with the Google Analytics API,
     using a variety of strategies: keyword arguments provided to this function, credentials
@@ -118,7 +115,6 @@ def authenticate(
             credentials = authorize(
                 client_id=credentials.client_id,
                 client_secret=credentials.client_secret,
-                save=save,
                 identity=credentials.identity,
                 prefix=prefix,
                 suffix=suffix,
@@ -127,8 +123,7 @@ def authenticate(
             credentials = authorize(
                 client_email=credentials.client_email,
                 private_key=credentials.private_key,
-                identity=credentials.identity,
-                save=save,
+                identity=credentials.identity
                 )
         else:
             raise KeyError("Cannot authenticate: enable interactive authorization, pass a token or use a service account.")
@@ -139,7 +134,7 @@ def authenticate(
 
 
 
-def authorize(client_id=None, client_secret=None, client_email=None, private_key=None, save=False, identity=None, prefix=None, suffix=None):
+def authorize(client_id=None, client_secret=None, client_email=None, private_key=None, identity=None, prefix=None, suffix=None):
     base_credentials = oauth.Credentials.find(
         valid=True,
         interactive=True,
@@ -157,9 +152,6 @@ def authorize(client_id=None, client_secret=None, client_email=None, private_key
         credentials.identity = base_credentials.identity
     else:
         credentials = base_credentials
-
-    if save:
-        keyring.set(credentials.identity, credentials.serialize())
 
     return credentials
 
@@ -190,5 +182,4 @@ def revoke(client_id, client_secret,
         )
 
     retval = credentials.revoke()
-    keyring.delete(credentials.identity)
     return retval
