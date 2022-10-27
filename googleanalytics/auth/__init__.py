@@ -11,7 +11,7 @@ the basic `googleanalytics.oauth.authenticate`, it prompts for information when 
 import re
 
 from . import oauth
-from .oauth import Flow, Credentials
+
 
 def navigate(accounts, account=None, webproperty=None, profile=None, ga_url=None, default_profile=True):
      
@@ -72,19 +72,11 @@ def get_profile(accounts, account, webproperty, profile):
     return None    
 
 
-def find(**kwargs):
-    return oauth.Credentials.find(**kwargs)
-
-def identity(name):
-    return find(identity=name)
-
 def authenticate(
-        client_id=None, client_secret=None,
-        client_email=None, private_key=None,
-        access_token=None, refresh_token=None,
+        service_account_key=None, service_account_subject=None,
         account=None, webproperty=None, profile=None,
         ga_url=None, identity=None, prefix=None,
-        suffix=None, interactive=False):
+        suffix=None):
     """
     The `authenticate` function will authenticate the user with the Google Analytics API,
     using a variety of strategies: keyword arguments provided to this function, credentials
@@ -96,90 +88,22 @@ def authenticate(
     using an OAuth2 token.
     """
 
-    credentials = oauth.Credentials.find(
-        valid=True,
-        interactive=interactive,
-        prefix=prefix,
-        suffix=suffix,
-        client_id=client_id,
-        client_secret=client_secret,
-        client_email=client_email,
-        private_key=private_key,
-        access_token=access_token,
-        refresh_token=refresh_token,
-        identity=identity,
-        )
-
-    if credentials.incomplete:
-        if interactive:
-            credentials = authorize(
-                client_id=credentials.client_id,
-                client_secret=credentials.client_secret,
-                identity=credentials.identity,
-                prefix=prefix,
-                suffix=suffix,
-                )
-        elif credentials.type == 2:
-            credentials = authorize(
-                client_email=credentials.client_email,
-                private_key=credentials.private_key,
-                identity=credentials.identity
-                )
-        else:
-            raise KeyError("Cannot authenticate: enable interactive authorization, pass a token or use a service account.")
-    
-    accounts = oauth.authenticate(credentials)
+    accounts = oauth.authenticate(service_account_key, service_account_subject)
     scope = navigate(accounts, account=account, webproperty=webproperty, profile=profile, ga_url=ga_url)
     return scope
 
 
 
 def authorize(client_id=None, client_secret=None, client_email=None, private_key=None, identity=None, prefix=None, suffix=None):
-    base_credentials = oauth.Credentials.find(
-        valid=True,
-        interactive=True,
-        identity=identity,
-        client_id=client_id,
-        client_secret=client_secret,
-        client_email=client_email,
-        private_key=private_key,
-        prefix=prefix,
-        suffix=suffix,
-        )
+    """ Not used anymore.  Keeping here to reduce errors"""
+    return None
 
-    if base_credentials.incomplete:
-        credentials = oauth.authorize(base_credentials.client_id, base_credentials.client_secret)
-        credentials.identity = base_credentials.identity
-    else:
-        credentials = base_credentials
-
-    return credentials
 
 def revoke(client_id, client_secret,
         client_email=None, private_key=None,
         access_token=None, refresh_token=None,
         identity=None, prefix=None, suffix=None):
+    """ Not used anymore.  Keeping here to reduce errors"""
+    return None
 
-    """
-    Given a client id, client secret and either an access token or a refresh token,
-    revoke OAuth access to the Google Analytics data and remove any stored credentials
-    that use these tokens.
-    """
-
-    if client_email and private_key:
-        raise ValueError('Two-legged OAuth does not use revokable tokens.')
     
-    credentials = oauth.Credentials.find(
-        complete=True,
-        interactive=False,
-        identity=identity,
-        client_id=client_id,
-        client_secret=client_secret,
-        access_token=access_token,
-        refresh_token=refresh_token,
-        prefix=prefix,
-        suffix=suffix,
-        )
-
-    retval = credentials.revoke()
-    return retval
