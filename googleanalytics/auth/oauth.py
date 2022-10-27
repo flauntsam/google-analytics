@@ -13,7 +13,7 @@ from googleanalytics import utils, account
 def get_service_credentials(service_account_key, service_account_subject):
     return service_account.Credentials.from_service_account_file(service_account_key, 
                                                                  scopes=['https://www.googleapis.com/auth/analytics.readonly'], 
-                                                                 subject=service_account_subject
+                                                                 subject=service_account_subject)
 
                                                                  
 def authenticate(service_account_key, service_account_subject):
