@@ -1,47 +1,26 @@
 # encoding: utf-8
 
-import json
-import webbrowser
 
 import addressable
-from oauth2client import client
-from apiclient import discovery
+
+import googleapiclient.discovery as discovery
+from google.oauth2 import service_account
 
 from googleanalytics import utils, account
-from .credentials import Credentials, normalize
 
 
-class Flow(client.OAuth2WebServerFlow):
-    def __init__(self, client_id, client_secret, redirect_uri):
-        super(Flow, self).__init__(client_id, client_secret,
-            scope='https://www.googleapis.com/auth/analytics.readonly',
-            redirect_uri=redirect_uri)
 
-    def step2_exchange(self, code):
-        credentials = super(Flow, self).step2_exchange(code)
-        return Credentials.find(complete=True, **credentials.__dict__)
+def get_service_credentials(service_account_key, service_account_subject):
+    return service_account.Credentials.from_service_account_file(service_account_key, 
+                                                                 scopes=['https://www.googleapis.com/auth/analytics.readonly'], 
+                                                                 subject=service_account_subject
 
-# a simplified version of `oauth2client.tools.run_flow`
-def authorize(client_id, client_secret):
-    flow = Flow(client_id, client_secret,
-        redirect_uri='urn:ietf:wg:oauth:2.0:oob')
+                                                                 
+def authenticate(service_account_key, service_account_subject):
 
-    authorize_url = flow.step1_get_authorize_url()
-    print ('Go to the following link in your browser: ' + authorize_url)
-    code = input('Enter verification code: ').strip()
-    return flow.step2_exchange(code)
-
-@normalize
-def revoke(credentials):
-    return credentials.revoke()
-
-@normalize
-def authenticate(credentials):
-    try:
-        client = credentials.authorize()
-        service = discovery.build('analytics', 'v3', http=client,  cache_discovery=False)
-    except:
-        service = discovery.build('analytics', 'v3', credentials=credentials, cache_discovery=False)
+    service = discovery.build('analytics', 'v3', 
+                              credentials=get_service_credentials(service_account_key, service_account_subject), 
+                              cache_discovery=False)
 
     raw_accounts = service.management().accounts().list().execute()['items']
     accounts = [account.Account(raw, service, credentials) for raw in raw_accounts]
