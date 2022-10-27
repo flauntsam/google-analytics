@@ -5,6 +5,7 @@ from copy import copy
 
 import httplib2
 import oauth2client
+from google.oauth2 import service_account
 import inspector
 
 from .. import utils
@@ -153,11 +154,10 @@ class Credentials(object):
             return None
         else:
             if self.type == 2:
-                return oauth2client.client.SignedJwtAssertionCredentials(
-                    service_account_name=self.client_email,
-                    private_key=self.private_key.encode('utf-8'),
-                    scope='https://www.googleapis.com/auth/analytics.readonly',
-                    )
+                return service_account.Credentials.from_service_account_file(self.private_key, 
+                                                                 scopes=['https://www.googleapis.com/auth/analytics.readonly'], 
+                                                                 subject=self.client_email)
+            
             else:
                 return oauth2client.client.OAuth2Credentials(
                     access_token=self.access_token,
