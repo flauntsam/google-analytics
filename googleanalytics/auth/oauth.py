@@ -17,9 +17,11 @@ def get_service_credentials(service_account_key, service_account_subject):
 
                                                                  
 def authenticate(service_account_key, service_account_subject):
-
+    
+    credentials = get_service_credentials(service_account_key, service_account_subject)
+    
     service = discovery.build('analytics', 'v3', 
-                              credentials=get_service_credentials(service_account_key, service_account_subject), 
+                              credentials=credentials, 
                               cache_discovery=False)
 
     raw_accounts = service.management().accounts().list().execute()['items']
